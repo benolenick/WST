@@ -1,0 +1,14 @@
+books/
+extracted/
+facts/
+logs/
+web_sources/
+state.json
+*.pyc
+__pycache__/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.env
