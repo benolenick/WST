@@ -6,19 +6,19 @@ He Who Knows Ten Thousand Things
 Structured knowledge extraction pipeline for technical books.
 Ingests PDFs/EPUBs/AZW3/MOBI/CHM, extracts actionable knowledge via local LLM,
 deduplicates against existing entries, and seeds to a FAISS-backed vector store
-(Fact Vault) for semantic search.
+(Memoria) for semantic search.
 
 Usage:
     python3 pipeline.py ingest          # Extract text from books/ into extracted/
     python3 pipeline.py extract         # LLM extracts structured facts into facts/
-    python3 pipeline.py dedup           # Deduplicate against existing FV facts
-    python3 pipeline.py seed            # Seed deduplicated facts to FV
+    python3 pipeline.py dedup           # Deduplicate against existing Memoria facts
+    python3 pipeline.py seed            # Seed deduplicated facts to Memoria
     python3 pipeline.py run             # Full pipeline: ingest → extract → dedup → seed
     python3 pipeline.py status          # Show pipeline state
 
 Environment variables:
     WST_HOME          — base directory (default: ~/wst)
-    FV_ENDPOINT       — Fact Vault API (default: http://127.0.0.1:8000)
+    MEMORIA_ENDPOINT       — Memoria API (default: http://127.0.0.1:8000)
     OLLAMA_ENDPOINT   — Ollama API (default: http://127.0.0.1:11434)
     OLLAMA_MODEL      — model to use (default: llama3:latest)
     SHAMAN_QUEUE      — AI-Shaman priority queue endpoint (optional)
@@ -49,7 +49,7 @@ FACTS_DIR = WST_HOME / "facts"
 LOGS_DIR = WST_HOME / "logs"
 STATE_FILE = WST_HOME / "state.json"
 
-FV_ENDPOINT = os.environ.get("FV_ENDPOINT", "http://127.0.0.1:8000")
+MEMORIA_ENDPOINT = os.environ.get("MEMORIA_ENDPOINT", "http://127.0.0.1:8000")
 OLLAMA_ENDPOINT = os.environ.get("OLLAMA_ENDPOINT", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3:latest")
 
@@ -254,7 +254,7 @@ def ingest():
 # Stage 2: Chunk + LLM extract facts
 # ---------------------------------------------------------------------------
 
-EXTRACTION_PROMPT = """You are an offensive security knowledge extractor for a Fact Vault used during penetration testing and CTF challenges.
+EXTRACTION_PROMPT = """You are an offensive security knowledge extractor for a Memoria used during penetration testing and CTF challenges.
 
 Your job: read the following text from a technical book and extract ACTIONABLE facts useful for penetration testing.
 
@@ -569,7 +569,7 @@ def dedup():
 
     # Check FV
     try:
-        resp = urllib.request.urlopen(f"{FV_ENDPOINT}/health", timeout=10)
+        resp = urllib.request.urlopen(f"{MEMORIA_ENDPOINT}/health", timeout=10)
         health = json.loads(resp.read())
         existing_count = health.get("memory_facts", health.get("fact_count", health.get("facts", 0)))
         print(f"  FV online: {existing_count} existing facts")
@@ -597,7 +597,7 @@ def dedup():
             try:
                 payload = json.dumps({"query": fact[:200], "top_k": 1}).encode()
                 req = urllib.request.Request(
-                    f"{FV_ENDPOINT}/search",
+                    f"{MEMORIA_ENDPOINT}/search",
                     data=payload,
                     headers={"Content-Type": "application/json"},
                     method="POST"
@@ -625,7 +625,7 @@ def dedup():
 # ---------------------------------------------------------------------------
 
 def seed():
-    """Stage 4: Seed deduplicated facts to FV."""
+    """Stage 4: Seed deduplicated facts to Memoria."""
     ensure_dirs()
     state = load_state()
 
@@ -640,7 +640,7 @@ def seed():
 
     # Check FV
     try:
-        resp = urllib.request.urlopen(f"{FV_ENDPOINT}/health", timeout=10)
+        resp = urllib.request.urlopen(f"{MEMORIA_ENDPOINT}/health", timeout=10)
         health = json.loads(resp.read())
         before_count = health.get("memory_facts", health.get("fact_count", health.get("facts", 0)))
         print(f"  FV online: {before_count} facts before seeding")
@@ -667,7 +667,7 @@ def seed():
             try:
                 payload = json.dumps({"fact": fact}).encode()
                 req = urllib.request.Request(
-                    f"{FV_ENDPOINT}/memorize",
+                    f"{MEMORIA_ENDPOINT}/memorize",
                     data=payload,
                     headers={"Content-Type": "application/json"},
                     method="POST"
@@ -687,7 +687,7 @@ def seed():
 
     # Check FV after
     try:
-        resp = urllib.request.urlopen(f"{FV_ENDPOINT}/health", timeout=10)
+        resp = urllib.request.urlopen(f"{MEMORIA_ENDPOINT}/health", timeout=10)
         health = json.loads(resp.read())
         after_count = health.get("memory_facts", health.get("fact_count", health.get("facts", 0)))
         print(f"\n  FV: {before_count} → {after_count} facts (+{after_count - before_count})")
@@ -718,7 +718,7 @@ def status():
 
     # FV status
     try:
-        resp = urllib.request.urlopen(f"{FV_ENDPOINT}/health", timeout=5)
+        resp = urllib.request.urlopen(f"{MEMORIA_ENDPOINT}/health", timeout=5)
         health = json.loads(resp.read())
         fv_count = health.get("memory_facts", health.get("fact_count", health.get("facts", 0)))
         print(f"  FV status: ONLINE ({fv_count} facts)")

@@ -2,7 +2,7 @@
 
 > *"He Who Knows Ten Thousand Things"*
 
-WST is a book-to-knowledge-base extraction pipeline. It reads technical books (PDF, EPUB, AZW3, MOBI, CHM), extracts structured, actionable knowledge using a local LLM, and loads it into a semantic vector store (Fact Vault) where AI agents and search tools can retrieve it in real time.
+WST is a book-to-knowledge-base extraction pipeline. It reads technical books (PDF, EPUB, AZW3, MOBI, CHM), extracts structured, actionable knowledge using a local LLM, and loads it into a semantic vector store (Memoria) where AI agents and search tools can retrieve it in real time.
 
 The core idea: technical books contain thousands of specific, actionable facts — exact commands, decision trees, configuration patterns, diagnostic procedures — buried inside hundreds of pages of narrative. WST pulls those facts out, deduplicates them, and makes them semantically searchable.
 
@@ -37,15 +37,15 @@ books/          web_sources/
      |
      v
   [Stage 3: Dedup]
-  Semantic similarity check vs FV
+  Semantic similarity check vs Memoria
   facts/*.deduped.json
      |
      v
   [Stage 4: Seed]
-  POST /memorize → Fact Vault
+  POST /memorize → Memoria
                    |
                    v
-             [Fact Vault]
+             [Memoria]
           sentence-transformers
           FAISS vector index
           semantic search API
@@ -86,13 +86,13 @@ pip install ebooklib PyPDF2 beautifulsoup4 lxml pyyaml
 - `ebook-convert` — from [Calibre](https://calibre-ebook.com/download)
 - `7z` — from p7zip (`apt install p7zip-full`)
 
-### Fact Vault
+### Memoria
 
-WST seeds into [Fact Vault](https://github.com/benolenick/fact-vault) — a lightweight semantic search API built on sentence-transformers and FAISS. It encodes each fact as a vector embedding using the `all-MiniLM-L6-v2` model and supports sub-second cosine similarity search across thousands of facts. Run it locally:
+WST seeds into [Memoria](https://github.com/benolenick/memoria) — a lightweight semantic search API built on sentence-transformers and FAISS. It encodes each fact as a vector embedding using the `all-MiniLM-L6-v2` model and supports sub-second cosine similarity search across thousands of facts. Run it locally:
 
 ```bash
-# See Fact Vault README for setup
-FV_ENDPOINT=http://127.0.0.1:8000
+# See Memoria README for setup
+MEMORIA_ENDPOINT=http://127.0.0.1:8000
 ```
 
 ### Ollama
@@ -120,8 +120,8 @@ python3 pipeline.py run
 # Or run stages individually:
 python3 pipeline.py ingest    # Extract raw text
 python3 pipeline.py extract   # LLM extracts structured facts
-python3 pipeline.py dedup     # Remove duplicates vs FV
-python3 pipeline.py seed      # Load into Fact Vault
+python3 pipeline.py dedup     # Remove duplicates vs Memoria
+python3 pipeline.py seed      # Load into Memoria
 
 # Check status
 python3 pipeline.py status
@@ -151,7 +151,7 @@ All configuration is via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WST_HOME` | `~/wst` | Base directory for all data |
-| `FV_ENDPOINT` | `http://127.0.0.1:8000` | Fact Vault API endpoint |
+| `MEMORIA_ENDPOINT` | `http://127.0.0.1:8000` | Memoria API endpoint |
 | `OLLAMA_ENDPOINT` | `http://127.0.0.1:11434` | Ollama API endpoint |
 | `OLLAMA_MODEL` | `llama3:latest` | Model for knowledge extraction |
 | `SHAMAN_QUEUE` | *(empty)* | AI-Shaman priority queue URL (optional) |
@@ -196,7 +196,7 @@ WST's prompt asks for two very specific things:
     → request quota increase or implement request batching"
 ```
 
-When an agent or user encounters condition A, querying Fact Vault returns the complete decision tree of what to check and try next. The knowledge is already structured as a procedure — no need to reason from first principles.
+When an agent or user encounters condition A, querying Memoria returns the complete decision tree of what to check and try next. The knowledge is already structured as a procedure — no need to reason from first principles.
 
 The prompt also filters out everything that isn't actionable: general theory, historical context, architecture overviews, basic definitions. A technical book might be 70% background and 30% specific techniques and procedures. WST extracts the 30%.
 
@@ -228,7 +228,7 @@ wst/
 
 ---
 
-## Querying Fact Vault
+## Querying Memoria
 
 Once seeded, query your knowledge base from any agent or script:
 

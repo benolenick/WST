@@ -10,7 +10,7 @@ Handles two source types:
 
 Environment variables:
     WST_HOME      — base directory (default: ~/wst)
-    FV_ENDPOINT   — Fact Vault API (default: http://127.0.0.1:8000)
+    MEMORIA_ENDPOINT   — Memoria API (default: http://127.0.0.1:8000)
 
 Web sources are cloned into WST_HOME/web_sources/.
 """
@@ -27,7 +27,7 @@ WEB_SOURCES = WST_HOME / "web_sources"
 EXTRACTED_DIR = WST_HOME / "extracted"
 FACTS_DIR = WST_HOME / "facts"
 
-FV_ENDPOINT = os.environ.get("FV_ENDPOINT", "http://127.0.0.1:8000")
+MEMORIA_ENDPOINT = os.environ.get("MEMORIA_ENDPOINT", "http://127.0.0.1:8000")
 
 
 # ---------------------------------------------------------------------------
@@ -192,7 +192,7 @@ def seed_gtfobins_to_fv(facts: list):
         return
 
     try:
-        resp = urllib.request.urlopen(f"{FV_ENDPOINT}/health", timeout=5)
+        resp = urllib.request.urlopen(f"{MEMORIA_ENDPOINT}/health", timeout=5)
         health = json.loads(resp.read())
         before = health.get("memory_facts", 0)
         print(f"  FV: {before} facts before seeding")
@@ -208,7 +208,7 @@ def seed_gtfobins_to_fv(facts: list):
         try:
             payload = json.dumps({"fact": fact}).encode()
             req = urllib.request.Request(
-                f"{FV_ENDPOINT}/memorize", data=payload,
+                f"{MEMORIA_ENDPOINT}/memorize", data=payload,
                 headers={"Content-Type": "application/json"}
             )
             urllib.request.urlopen(req, timeout=30)
@@ -219,7 +219,7 @@ def seed_gtfobins_to_fv(facts: list):
                 print(f"    [!] {e}", file=sys.stderr)
 
     try:
-        resp = urllib.request.urlopen(f"{FV_ENDPOINT}/health", timeout=5)
+        resp = urllib.request.urlopen(f"{MEMORIA_ENDPOINT}/health", timeout=5)
         health = json.loads(resp.read())
         after = health.get("memory_facts", 0)
         print(f"  FV: {before} → {after} facts (+{after - before})")
