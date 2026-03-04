@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
 WST Web Source Ingester
-Processes GTFOBins (YAML -> direct facts) and HackTricks (markdown -> extracted text for LLM).
+Ingests structured web documentation sources into the WST knowledge pipeline.
+
+Handles two source types:
+  - Structured data (YAML/JSON schemas): parsed directly into facts without LLM involvement.
+  - Unstructured prose (markdown docs/wikis): converted to plain text and queued for
+    LLM extraction via the main pipeline.
 
 Environment variables:
     WST_HOME      — base directory (default: ~/wst)
     FV_ENDPOINT   — Fact Vault API (default: http://127.0.0.1:8000)
 
-Web sources are cloned into WST_HOME/web_sources/:
-    git clone https://github.com/GTFOBins/GTFOBins.github.io.git web_sources/gtfobins
-    git clone https://github.com/HackTricks-wiki/hacktricks.git web_sources/hacktricks
+Web sources are cloned into WST_HOME/web_sources/.
 """
 
 import json

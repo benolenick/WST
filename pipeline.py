@@ -3,12 +3,14 @@
 WST — Wan Shi Tong
 He Who Knows Ten Thousand Things
 
-Book-to-FV knowledge extraction pipeline.
-Ingests PDFs/EPUBs, extracts actionable security facts via LLM, seeds to Fact Vault.
+Structured knowledge extraction pipeline for technical books.
+Ingests PDFs/EPUBs/AZW3/MOBI/CHM, extracts actionable knowledge via local LLM,
+deduplicates against existing entries, and seeds to a FAISS-backed vector store
+(Fact Vault) for semantic search.
 
 Usage:
     python3 pipeline.py ingest          # Extract text from books/ into extracted/
-    python3 pipeline.py extract         # LLM extracts facts from extracted/ into facts/
+    python3 pipeline.py extract         # LLM extracts structured facts into facts/
     python3 pipeline.py dedup           # Deduplicate against existing FV facts
     python3 pipeline.py seed            # Seed deduplicated facts to FV
     python3 pipeline.py run             # Full pipeline: ingest → extract → dedup → seed
